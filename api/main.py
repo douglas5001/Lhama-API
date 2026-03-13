@@ -3,13 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 
 from app.core.config import settings
-from app.database.conections.database import Base, db_instance
-from app.controllers import usuario_controller
+from app.database.connections.database import Base, db_instance
+from app.controllers.user import user_controller
 
 app = FastAPI(
     title="Middleware API",
-    description="Exemplo de estrutura profissional com FastAPI em camadas",
-    version="1.0.0"
+    description="Example of professional structure with FastAPI in layers",
+    version="1.0.0",
+    docs_url=None if settings.ENVIRONMENT == "PRD" else "/docs",
+    redoc_url=None if settings.ENVIRONMENT == "PRD" else "/redoc",
 )
 
 app.add_middleware(
@@ -20,13 +22,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-Base.metadata.create_all(bind=db_instance.engine)
 
-app.include_router(usuario_controller.router)
+app.include_router(user_controller.router)
 
 @app.get("/")
 def root():
     return {
-        "message": "API está no ar!",
-        "db_tipo": settings.DB
+        "message": "API is online!",
+        "db_type": settings.DB
     }

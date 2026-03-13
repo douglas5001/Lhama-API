@@ -1,10 +1,13 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Literal
 
 class Settings(BaseSettings):
-    DB: str = "sqlite"
+    ENVIRONMENT: Literal["DEV", "HML", "PRD"] = "DEV"
+    
+    DB: str = "postgres"
     HOST: str = "localhost"
-    USER: str = "root"
-    PASSWORD: str = "root"
+    DB_USER: str = "postgres"
+    PASSWORD: str = "postgres"
     DATABASE: str = "fastapi"
     PORT: int = 5432
 

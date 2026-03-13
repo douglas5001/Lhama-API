@@ -17,17 +17,17 @@ class Database:
             self.engine = create_engine(database_url, connect_args={"check_same_thread": False})
             
         elif db_type in ["postgres", "postgresql"]:
-            database_url = f"postgresql://{settings.USER}:{settings.PASSWORD}@{settings.HOST}:{settings.PORT}/{settings.DATABASE}"
+            database_url = f"postgresql://{settings.DB_USER}:{settings.PASSWORD}@{settings.HOST}:{settings.PORT}/{settings.DATABASE}"
             self.engine = create_engine(database_url)
             
         else:
-            raise ValueError(f"Banco de dados '{db_type}' não é suportado.")
+            raise ValueError(f"Database '{db_type}' is not supported.")
 
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
     def get_db(self):
         if self.SessionLocal is None:
-            raise RuntimeError("Conexão do banco de dados não inicializada.")
+            raise RuntimeError("Database connection not initialized.")
         
         db = self.SessionLocal()
         try:

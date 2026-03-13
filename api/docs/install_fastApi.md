@@ -1,24 +1,29 @@
-
-### Inicialize o venv
+### Initialize venv
 
 ```bash
 source .venv/bin/activate
 ```
 
-### Instacao do Fast Api
+### Install Requirements
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Install fastAPI
+### Install FastAPI
 
 ```bash
 pip install "fastapi[standard]"
 ```
 
-### Iniciar o servidor
+### Start the server
 
 ```bash
 fastapi dev main.py --port 8080 --reload
+```
+
+#### INIT
+
+```bash
+uvicorn main:app --port 8080 --reload
 ```
