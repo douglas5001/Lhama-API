@@ -1,9 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.sql import func
 from app.database.connections.database import Base
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 class User(Base):
     __tablename__ = "users"
@@ -18,7 +16,12 @@ class User(Base):
 
     @staticmethod
     def get_password_hash(password: str) -> str:
-        return pwd_context.hash(password)
+        pwd_bytes = password.encode('utf-8')
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(pwd_bytes, salt)
+        return hashed_password.decode('utf-8')
 
     def verify_password(self, plain_password: str) -> bool:
-        return pwd_context.verify(plain_password, self.password)
+        pwd_bytes = plain_password.encode('utf-8')
+        hash_bytes = self.password.encode('utf-8')
+        return bcrypt.checkpw(pwd_bytes, hash_bytes)

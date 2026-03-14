@@ -5,6 +5,7 @@ import os
 from app.core.config import settings
 from app.database.connections.database import Base, db_instance
 from app.controllers.user import user_controller
+from app.controllers.auth import auth_controller
 from app.middlewares.security_middleware import SecurityMiddleware
 
 app = FastAPI(
@@ -39,6 +40,7 @@ app.add_middleware(
 
 
 app.include_router(user_controller.router)
+app.include_router(auth_controller.router)
 
 @app.get("/")
 def root():
