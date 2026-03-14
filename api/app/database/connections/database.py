@@ -38,3 +38,4 @@ class Database:
 db_instance = Database()
 
 Base = db_instance.Base
+get_db = db_instance.get_db
