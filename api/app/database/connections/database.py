@@ -1,5 +1,5 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.orm import declarative_base
 from app.core.config import settings
 
 class Database:
@@ -13,29 +13,28 @@ class Database:
         db_type = settings.DB.lower()
         
         if db_type == "sqlite":
-            database_url = f"sqlite:///./{settings.DATABASE}.db"
-            self.engine = create_engine(database_url, connect_args={"check_same_thread": False})
+            database_url = f"sqlite+aiosqlite:///./{settings.DATABASE}.db"
+            self.engine = create_async_engine(database_url, connect_args={"check_same_thread": False})
             
         elif db_type in ["postgres", "postgresql"]:
-            database_url = f"postgresql://{settings.DB_USER}:{settings.PASSWORD}@{settings.HOST}:{settings.PORT}/{settings.DATABASE}"
-            self.engine = create_engine(database_url)
+            database_url = f"postgresql+asyncpg://{settings.DB_USER}:{settings.PASSWORD}@{settings.HOST}:{settings.PORT}/{settings.DATABASE}"
+            self.engine = create_async_engine(database_url)
             
         else:
             raise ValueError(f"Database '{db_type}' is not supported.")
 
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        # Utilizamos o async_sessionmaker ao invés do normal "sessionmaker"
+        self.SessionLocal = async_sessionmaker(
+            autocommit=False, autoflush=False, bind=self.engine, class_=AsyncSession
+        )
 
-    def get_db(self):
+    async def get_db(self):
         if self.SessionLocal is None:
             raise RuntimeError("Database connection not initialized.")
         
-        db = self.SessionLocal()
-        try:
-            yield db
-        finally:
-            db.close()
+        async with self.SessionLocal() as db:
+             yield db
 
 db_instance = Database()
 
 Base = db_instance.Base
-get_db = db_instance.get_db

@@ -1,20 +1,23 @@
+import asyncio
 from app.core.logger import app_logger as logger
 from app.database.connections.database import db_instance
 from app.database.seeds.user_seed import seed_users
 
-def run_seeds():
+async def run_seeds():
     logger.info("Starting database seeds...")
     
-    db = next(db_instance.get_db())
+    # get_db agora é um gerador assíncrono, extraímos a sessão de forma manual aqui para scripts CLI
+    db_gen = db_instance.get_db()
+    db = await anext(db_gen)
+    
     try:
-        seed_users(db)
-        
+        await seed_users(db)
         logger.info("Database seeding completed.")
     except Exception as e:
         logger.error(f"Error while running seeds: {e}")
-        db.rollback()
+        await db.rollback()
     finally:
-        db.close()
+        await db.close()
 
 if __name__ == "__main__":
-    run_seeds()
+    asyncio.run(run_seeds())

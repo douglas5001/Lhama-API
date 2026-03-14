@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.database.connections.database import db_instance
@@ -15,8 +15,8 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/login/access-token"
 )
 
-def get_current_user(
-    db: Session = Depends(db_instance.get_db),
+async def get_current_user(
+    db: AsyncSession = Depends(db_instance.get_db),
     token: str = Depends(oauth2_scheme)
 ) -> User:
     """
@@ -50,7 +50,7 @@ def get_current_user(
         
     user_repo = UserRepository(db)
     # Buscamos usando o Subject ("sub") que definimos na hora da criação de salvar o Token, que era o email!
-    user = user_repo.get_by_email(email=token_data.sub)
+    user = await user_repo.get_by_email(email=token_data.sub)
     if not user:
         raise credentials_exception
         

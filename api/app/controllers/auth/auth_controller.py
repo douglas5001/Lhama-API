@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt, JWTError
 
 from app.core.config import settings
@@ -12,15 +12,15 @@ from app.dto.auth.auth_dto import Token, LoginRequest, RefreshRequest
 router = APIRouter(prefix="/login", tags=["Authenticacao"])
 
 @router.post("/access-token", response_model=Token)
-def login_access_token(
+async def login_access_token(
     login_data: LoginRequest,
-    db: Session = Depends(db_instance.get_db)
+    db: AsyncSession = Depends(db_instance.get_db)
 ) -> dict:
     """
     Endpoint para resgatar um Access Token via E-mail e Senha enviando um JSON no Body.
     """
     user_repo = UserRepository(db)
-    user = user_repo.get_by_email(email=login_data.email) 
+    user = await user_repo.get_by_email(email=login_data.email) 
     
     if not user or not user.verify_password(login_data.password):
         app_logger.warning(f"Tentativa de login frustrada para o email: {login_data.email}")
@@ -44,9 +44,9 @@ def login_access_token(
     }
 
 @router.post("/refresh-token", response_model=Token)
-def refresh_token(
+async def refresh_token(
     request_data: RefreshRequest,
-    db: Session = Depends(db_instance.get_db)
+    db: AsyncSession = Depends(db_instance.get_db)
 ) -> dict:
     """
     Endpoint para gerar um NOVO Access Token usando um Refresh Token válido que ainda não expirou.
@@ -74,7 +74,7 @@ def refresh_token(
         raise credentials_exception
         
     user_repo = UserRepository(db)
-    user = user_repo.get_by_email(email=email)
+    user = await user_repo.get_by_email(email=email)
     
     if not user or not user.is_active:
         raise credentials_exception
