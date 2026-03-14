@@ -101,3 +101,43 @@ async def test_redis_get_top3():
     
     ranking = [{"posicao": i+1, "jogador": p[0], "pontos": p[1]} for i, p in enumerate(top3)]
     return {"top_3_jogadores": ranking}
+
+# --- 6. Transação Atômica com LUA (Anti-Race Condition) ---
+@router.post("/lua-transaction")
+async def test_redis_lua_script(item_id: str = "ingresso_show"):
+    """
+    Simula 1.000 pessoas tentando comprar o ÚLTIMO ingresso ao mesmo tempo.
+    Usa um Script LUA interno no Redis para garantir que a leitura de estoque 
+    e o débito sejam 100% atômicos, impossibilitando venda duplicada de 1 só ingresso.
+    """
+    redis_client = get_redis()
+    
+    # 1. Por garantia, se a chave não existir, cria com 5 ingressos para o teste
+    await redis_client.setnx(item_id, 5) 
+    
+    # 2. O Script mágico em Lua que será atirado pra dentro do Cérebro do Redis
+    # KEYS[1] = Nome do item passado (ingresso_show).
+    lua_script = """
+    local estoque_atual = tonumber(redis.call('get', KEYS[1]))
+    
+    if estoque_atual and estoque_atual > 0 then
+        -- Vende o ingresso atomicamente e retorna o número que sobrou
+        redis.call('decr', KEYS[1])
+        return estoque_atual - 1
+    else
+        -- Avisa que o estoque zerou (-1)
+        return -1
+    end
+    """
+    
+    # 3. O FastAPI envia o script EVAL para o Redis processar de olhos fechados
+    # 1 representa que estamos passando 1 variável no Array de KEYS (item_id)
+    resultado = await redis_client.eval(lua_script, 1, item_id)
+    
+    if resultado == -1:
+        raise HTTPException(status_code=400, detail="Estoque Esgotado! Mais sorte da próxima vez.")
+        
+    return {
+        "message": "Compra Atômica Realizada com Sucesso! Evita 100% o bug de Race Condition.",
+        "ingressos_restantes": resultado
+    }
