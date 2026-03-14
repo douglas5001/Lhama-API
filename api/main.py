@@ -5,6 +5,7 @@ import os
 from app.core.config import settings
 from app.database.connections.database import Base, db_instance
 from app.controllers.user import user_controller
+from app.middlewares.security_middleware import SecurityMiddleware
 
 app = FastAPI(
     title="Middleware API",
@@ -12,6 +13,20 @@ app = FastAPI(
     version="1.0.0",
     docs_url=None if settings.ENVIRONMENT == "PRD" else "/docs",
     redoc_url=None if settings.ENVIRONMENT == "PRD" else "/redoc",
+)
+
+# --- MIDDLEWARES ---
+# A ordem dos Middlewares importa! 
+# Os últimos registrados com `add_middleware` rodam PRIMEIRO (são de Fora para Dentro).
+
+# 1. Loga primeiro toda e qualquer requisição antes mesmo da checagem de Segurança
+from app.middlewares.request_logger_middleware import RequestLoggerMiddleware
+app.add_middleware(RequestLoggerMiddleware)
+
+app.add_middleware(
+    SecurityMiddleware,
+    rate_limit_requests=settings.RATE_LIMIT_REQUESTS,
+    rate_limit_window=settings.RATE_LIMIT_WINDOW
 )
 
 app.add_middleware(

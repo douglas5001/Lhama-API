@@ -1,15 +1,12 @@
-import logging
+from app.core.logger import app_logger as logger
 from sqlalchemy.orm import Session
 from app.database.models.user.user_model import User
 from app.dto.user.user_dto import UserCreate
 from app.repositories.user.user_repository import UserRepository
 
-logger = logging.getLogger(__name__)
-
 def seed_users(db: Session):
     repository = UserRepository(db)
     
-    # Check if we already have the admin user
     admin_email = "admin@example.com"
     existing_user = repository.get_by_email(admin_email)
     
@@ -18,7 +15,7 @@ def seed_users(db: Session):
         user_data = UserCreate(
             name="Admin User",
             email=admin_email,
-            password="adminpassword", # In production, this must be a hash!
+            password="adminpassword",
             is_active=True,
             is_admin=True
         )

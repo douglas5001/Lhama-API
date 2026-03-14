@@ -27,7 +27,7 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 from app.database.connections.database import Base
-from app.database.models.user.user_model import User
+import app.database.models  # Importa todos os modelos registrados no __init__
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
